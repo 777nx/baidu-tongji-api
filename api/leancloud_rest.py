@@ -31,7 +31,9 @@ def get_baidu_token(app_id, app_key, keys=('accessToken',)):
         'keys': ','.join(keys),
     }
     resp = requests.get(url, headers=_headers(app_id, app_key), params=params, timeout=15)
-    resp.raise_for_status()
+    if resp.status_code >= 400:
+        raise RuntimeError('LeanCloud 查询失败 HTTP {}: {} | url={}'.format(
+            resp.status_code, resp.text[:500], url))
     results = resp.json().get('results') or []
     if not results:
         raise RuntimeError('BaiduToken 为空，请先在 LeanCloud 写入 accessToken/refreshToken')
