@@ -1,2 +1,1 @@
-requests==2.26.0
-leancloud==2.9.10
+requests>=2.31.0,<3
