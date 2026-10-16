@@ -6,9 +6,8 @@ import os
 import sys
 import requests
 
-# GitHub Actions 从 token/ 目录运行，需能导入 api/leancloud_rest.py
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'api'))
-from leancloud_rest import get_baidu_token, save_baidu_token  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from lib.leancloud_rest import get_baidu_token, save_baidu_token  # noqa: E402
 
 
 class UpdateAccessToken:
