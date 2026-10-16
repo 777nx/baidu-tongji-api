@@ -37,6 +37,3 @@ jobs:
       working-directory: ./token
       run: | 
         python run.py
-
-    - name: keep alive
-      uses: gautamkrishnar/keepalive-workflow@master # keep workflows from being suspended when no commit for a long time
