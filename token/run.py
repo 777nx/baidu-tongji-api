@@ -7,25 +7,18 @@ import sys
 import requests
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from lib.leancloud_rest import get_baidu_token, save_baidu_token  # noqa: E402
+from lib.upstash_rest import get_baidu_token, save_baidu_token  # noqa: E402
 
 
 class UpdateAccessToken:
     def __init__(self):
         self.api_key = os.environ["APIKEY"]
         self.secret_key = os.environ["SECRETKEY"]
-        self.app_id = os.environ["APPID"]
-        self.app_key = os.environ["APPKEY"]
 
     def get_token(self):
-        token_data = get_baidu_token(
-            self.app_id,
-            self.app_key,
-            keys=('accessToken', 'refreshToken'),
-        )
-        self.object_id = token_data.get('objectId')
-        self.access_token = token_data.get('accessToken')
-        self.refresh_token = token_data.get('refreshToken')
+        token_data = get_baidu_token()
+        self.access_token = token_data['accessToken']
+        self.refresh_token = token_data['refreshToken']
 
     def update_token(self):
         url = (
@@ -41,17 +34,11 @@ class UpdateAccessToken:
             raise RuntimeError('刷新百度 token 失败: {}'.format(result))
         self.access_token = result['access_token']
         self.refresh_token = result['refresh_token']
-        save_baidu_token(
-            self.app_id,
-            self.app_key,
-            self.object_id,
-            self.access_token,
-            self.refresh_token,
-        )
+        save_baidu_token(self.access_token, self.refresh_token)
 
 
 if __name__ == '__main__':
     u = UpdateAccessToken()
     u.get_token()
     u.update_token()
-    print('Baidu token refreshed OK')
+    print('Baidu token refreshed OK (Upstash)')

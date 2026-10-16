@@ -12,41 +12,35 @@ from urllib import parse
 from urllib.parse import urlparse
 from http.server import BaseHTTPRequestHandler
 
-
-def _leancloud_base(app_id):
-    custom = os.environ.get('LEANCLOUD_API_SERVER') or os.environ.get('LC_API_SERVER')
-    if custom:
-        return custom.rstrip('/')
-    return 'https://{}.api.lncldglobal.com'.format(app_id[:8].lower())
+TOKEN_KEY = 'baidu:token'
 
 
 def _fetch_access_token():
-    app_id = os.environ.get('APPID')
-    app_key = os.environ.get('APPKEY')
-    if not app_id or not app_key:
-        raise RuntimeError('缺少环境变量 APPID / APPKEY')
+    url = (os.environ.get('UPSTASH_REDIS_REST_URL') or '').rstrip('/')
+    token = os.environ.get('UPSTASH_REDIS_REST_TOKEN') or ''
+    if not url or not token:
+        raise RuntimeError('缺少环境变量 UPSTASH_REDIS_REST_URL / UPSTASH_REDIS_REST_TOKEN')
 
-    url = '{}/1.1/classes/BaiduToken'.format(_leancloud_base(app_id))
-    headers = {
-        'X-LC-Id': app_id,
-        'X-LC-Key': app_key,
-        'Content-Type': 'application/json',
-    }
-    params = {
-        'limit': 1,
-        'order': '-updatedAt',
-        'keys': 'accessToken',
-    }
-    resp = requests.get(url, headers=headers, params=params, timeout=15)
+    resp = requests.post(
+        url,
+        headers={
+            'Authorization': 'Bearer ' + token,
+            'Content-Type': 'application/json',
+        },
+        json=['GET', TOKEN_KEY],
+        timeout=15,
+    )
     if resp.status_code >= 400:
-        raise RuntimeError('LeanCloud 查询失败 HTTP {}: {} | url={}'.format(
-            resp.status_code, resp.text[:500], url))
-    results = resp.json().get('results') or []
-    if not results:
-        raise RuntimeError('BaiduToken 为空，请先在 LeanCloud 写入 accessToken/refreshToken')
-    access_token = results[0].get('accessToken')
+        raise RuntimeError('Upstash 查询失败 HTTP {}: {}'.format(
+            resp.status_code, resp.text[:500]))
+
+    raw = resp.json().get('result')
+    if raw is None:
+        raise RuntimeError('Upstash 中还没有 baidu:token，请先写入 accessToken/refreshToken')
+    data = json.loads(raw) if isinstance(raw, str) else raw
+    access_token = (data or {}).get('accessToken')
     if not access_token:
-        raise RuntimeError('LeanCloud BaiduToken.accessToken 为空')
+        raise RuntimeError('baidu:token.accessToken 为空')
     return access_token
 
 
